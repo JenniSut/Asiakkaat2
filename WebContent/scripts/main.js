@@ -17,4 +17,9 @@ function formDataJsonStr(formArray) {
 	return JSON.stringify(returnArray);
 }
 
-
+function siivoa (teksti){
+	teksti =teksti.replace("<","");
+	teksti=teksti.replace(";","");
+	teksti=teksti.replace("'","''");
+	return teksti;
+}

@@ -15,7 +15,8 @@
 	<table>
 	<thead>
 		<tr>
-			<th colspan="5" class="oikealle"><span id="takaisin">Takaisin listaukseen</span></th>
+			<th colspan="3" id ="ilmo"></th>
+			<th colspan="2" class="oikealle"><a href="listaaasiakkaat.jsp" id="takasisin">Takaisin listaukseen</a></th>
 		</tr>
 		<tr>
 			<th>Etunimi</th>
@@ -31,73 +32,81 @@
 			<td><input type="text" name="sukunimi" id="sukunimi"></td>
 			<td><input type="text" name="puhelin" id="puhelin"></td>
 			<td><input type="text" name="sposti" id="sposti"></td> 
-			<td><input type="submit" id="tallenna" value="Lis‰‰"></td>
+			<td><input type="button" name ="nappi" id="tallenna" value="Lis‰‰" onclick ="lisaaTiedot()"></td>
 		</tr>
 	</tbody>
 </table>
 </form>
 <span id="ilmo"></span>
+</body>
 <script>
-$(document).ready(function(){
-	$("#takaisin").click(function(){
-		document.location="listaaasiakkaat.jsp";
-	});
-	
-	$("#tiedot").validate({						
-		rules: {
-			etunimi:  {
-				required: true,				
-				minlength: 2				
-			},	
-			sukunimi:  {
-				required: true,				
-				minlength: 2				
-			},
-			puhelin:  {
-				required: true,
-				minlength: 5
-			},	
-			sposti:  {
-				required: true,
-				email: true				
-			}	
-		},
-		messages: {
-			etunimi: {     
-				required: "Puuttuu",				
-				minlength: "Liian lyhyt"			
-			},
-			sukunimi: {
-				required: "Puuttuu",				
-				minlength: "Liian lyhyt"
-			},
-			puhelin: {
-				required: "Puuttuu",
-				minlength: "Liian lyhyt"
-			},
-			sposti: {
-				required: "Puuttuu",
-				email: "Ei kelpaa"
-			}
-		},			
-		submitHandler: function(form) {	
-			lisaaTiedot();
-		}		
-	});  
-	$("#etunimi").focus(); 
-});
 function lisaaTiedot(){
-	var formJsonStr = formDataJsonStr($("#tiedot").serializeArray()); //muutetaan lomakkeen tiedot json-stringiksi
-	console.log(formJsonStr);
-	$.ajax({url:"asiakkaat", data:formJsonStr, type:"POST", dataType:"json", success:function(result) { //result on joko {"response:1"} tai {"response:0"}       
-		if(result.response==0){
-        	$("#ilmo").html("Asiakkaan lis‰‰minen ep‰onnistui.");
-        }else if(result.response==1){			
-        	$("#ilmo").html("Asiakkaan lis‰‰minen onnistui.");
-        	$("#etunimi, #sukunimi, #puhelin, #sposti").val("");
+	var ilmo = "";
+	if(document.getElementById("etunimi").value.length<3){
+		ilmo = "Etunimi ei kelpaa!";
+	}else if (document.getElementById("sukunimi").value.length<2){
+		ilmo = "Sukunimi ei kelpaa!";
+	}else if (document.getElementById("puhelin").value.length<8){
+		ilmo = "Puhelinnumero ei kelpaa!";
+	}else if (document.getElementById("sposti").value.length<1){
+		ilmo = "S‰hkˆposti ei kelpaa!";
+	}
+	if (ilmo != ""){
+		document.getElementById("ilmo").innerHTML= ilmo;
+		setTimeout(function(){
+			document.getElementById("ilmo").innerHTML = ""}, 3000);
+		return;
+	}
+	document.getElementById("etunimi").value= siivoa(document.getElementById("etunimi").value);
+	document.getElementById("sukunimi").value= siivoa(document.getElementById("sukunimi").value);
+	document.getElementById("puhelin").value= siivoa(document.getElementById("puhelin").value);
+	document.getElementById("sposti").value= siivoa(document.getElementById("sposti").value);
+	
+	var formJsonStr=formDataJsonStr(document.getElementById("tiedot"));
+	fetch ("asiakkaat",{
+		method: 'POST',
+		body:formJsonStr
+	})
+	.then(function (response){
+		return response.json()
+	})
+	.then (function (responseJson){
+		var vastaus = responseJson.response;
+		if (vastaus == 0){
+			document.GetElementById("ilmo").innerHTML = "Asiakkaan lis‰‰minen ep‰onnistui";
+		}else if (vastaus == 1){
+			document.getElementById("ilmo").innerHTML = "Asiakkaan lis‰‰minen onnistui!";
+			haeTiedot();
 		}
-    }});	
+		setTimeout (function() {document.getElementById("ilmo").innerHTML =""}, 3000);
+	});
+	document.getElementById("tiedot").reset();
+}
+
+function requestURLParam(sParam){
+    var sPageURL = window.location.search.substring(1);
+    var sURLVariables = sPageURL.split("&");
+    for (var i = 0; i < sURLVariables.length; i++){
+        var sParameterName = sURLVariables[i].split("=");
+        if(sParameterName[0] == sParam){
+            return sParameterName[1];
+        }
+    }
+}
+function formDataJsonStr(formArray) {
+	var returnArray = {};
+	for (var i = 0; i < formArray.length; i++){
+		returnArray[formArray[i]['name']] = formArray[i]['value'];
+	}
+	return JSON.stringify(returnArray);
+}
+
+function siivoa (teksti){
+	teksti =teksti.replace("<","");
+	teksti=teksti.replace(";","");
+	teksti=teksti.replace("'","''");
+	return teksti;
 }
 </script>
-</body>
+
 </html>
